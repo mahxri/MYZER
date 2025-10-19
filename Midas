@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Midas - AI Finance Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F8F8; /* Soft off-white */
+        }
+        #chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chat-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        #chat-container::-webkit-scrollbar-thumb {
+            background: #d4af37; /* Gold */
+            border-radius: 4px;
+        }
+        #chat-container::-webkit-scrollbar-thumb:hover {
+            background: #c0a02f; /* Darker Gold */
+        }
+        .message-bubble {
+            max-width: 80%;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        /* Custom gold button style */
+        .gold-button {
+            background: linear-gradient(145deg, #d4af37, #f7d780); /* Gold gradient */
+            color: white;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .gold-button:hover {
+            background: linear-gradient(145deg, #c0a02f, #e0c26c); /* Darker gold on hover */
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .gold-button:disabled {
+            background: #e0e0e0;
+            color: #a0a0e0;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        .gold-border-focus:focus-within {
+            border-color: #d4af37; /* Gold border on focus */
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.5); /* Gold ring */
+        }
+    </style>
+</head>
+<body class="flex h-screen items-center justify-center">
+
+<div id="api-key-modal" class="absolute inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md transform transition-all">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Enter API Key</h2>
+        <p class="text-gray-600 mb-6">Please provide your Google Gemini API key to start chatting with Midas.</p>
+        <input type="password" id="api-key-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 gold-border-focus transition" placeholder="Your API Key">
+        <div class="flex justify-end mt-6">
+            <button id="save-api-key-btn" class="px-6 py-2 gold-button transform hover:scale-105">Save & Start</button>
+        </div>
+    </div>
+</div>
+
+<div id="chatbot-ui" class="hidden w-full h-full max-w-4xl max-h-[90vh] md:h-full md:max-h-full flex flex-col bg-white shadow-2xl rounded-2xl">
+    <header class="flex items-center justify-center p-4 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
+        <div class="flex items-center space-x-3">
+            <div class="w-7 h-7 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 text-white flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-md">$</div>
+            <h1 class="text-xl font-bold text-gray-800">Midas</h1>
+        </div>
+    </header>
+
+    <div id="chat-container" class="flex-1 p-6 overflow-y-auto space-y-4 bg-white">
+        <!-- Chat messages will be appended here --><div class="flex items-start gap-3">
+        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 text-white flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-md">$</div>
+        <div class="bg-gray-100 text-gray-800 rounded-xl p-3 message-bubble shadow-sm">
+            <p>Hello there! I'm Midas, your friendly guide to better finances. How can I help you find your financial gold today? ✨</p>
+        </div>
+    </div>
+    </div>
+
+    <footer class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+        <div class="flex items-center bg-white rounded-lg border border-gray-200 gold-border-focus transition-shadow shadow-md">
+            <input type="text" id="user-input" class="w-full p-4 border-none focus:ring-0 rounded-l-lg text-gray-700 placeholder-gray-500" placeholder="Ask Midas about your finances...">
+            <button id="send-btn" class="px-6 py-3 gold-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-send"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </div>
+    </footer>
+</div>
+
+<script>
+    const apiKeyModal = document.getElementById('api-key-modal');
+    const apiKeyInput = document.getElementById('api-key-input');
+    const saveApiKeyBtn = document.getElementById('save-api-key-btn');
+    const chatbotUi = document.getElementById('chatbot-ui');
+    const chatContainer = document.getElementById('chat-container');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    let apiKey = localStorage.getItem('geminiApiKey');
+    // Pre-fill the API key if it's not already set
+    const providedApiKey = 'AIzaSyAooVRbGNFRFIgK6J185gJ-3zAdjmJC_Es';
+    if (!apiKey) {
+        apiKey = providedApiKey;
+        localStorage.setItem('geminiApiKey', providedApiKey);
+    }
+    let chatHistory = [];
+
+    // Function to check and initialize the UI
+    function initializeApp() {
+        if (apiKey) {
+            apiKeyModal.classList.add('hidden');
+            chatbotUi.classList.remove('hidden');
+        } else {
+            apiKeyModal.classList.remove('hidden');
+            chatbotUi.classList.add('hidden');
+        }
+    }
+
+    // Save API Key
+    saveApiKeyBtn.addEventListener('click', () => {
+        const key = apiKeyInput.value.trim();
+        if (key) {
+            apiKey = key;
+            localStorage.setItem('geminiApiKey', key);
+            initializeApp();
+        }
+    });
+
+    // Allow changing the API Key - REMOVED
+
+
+    // Function to add a message to the chat container
+    function addMessage(sender, message) {
+        const messageDiv = document.createElement('div');
+        let content;
+
+        // Sanitize message to prevent HTML injection
+        const sanitizedMessage = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+        if (sender === 'user') {
+            content = `
+                    <div class="flex justify-end">
+                        <div class="bg-gradient-to-br from-yellow-400 to-yellow-600 text-white rounded-xl p-3 message-bubble shadow-md">
+                            <p>${sanitizedMessage}</p>
+                        </div>
+                    </div>
+                `;
+        } else { // AI
+            content = `
+                    <div class="flex items-start gap-3">
+                        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 text-white flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-md">$</div>
+                        <div class="bg-gray-100 text-gray-800 rounded-xl p-3 message-bubble shadow-sm">
+                            <p>${sanitizedMessage}</p>
+                        </div>
+                    </div>
+                `;
+        }
+        messageDiv.innerHTML = content;
+        chatContainer.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Function to show typing indicator
+    function showTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.id = 'typing-indicator';
+        typingDiv.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="w-7 h-7 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 text-white flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-md">$</div>
+                    <div class="bg-gray-100 text-gray-800 rounded-xl p-4 message-bubble shadow-sm flex items-center space-x-2">
+                         <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: -0.3s;"></div>
+                         <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: -0.15s;"></div>
+                         <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    </div>
+                </div>
+            `;
+        chatContainer.appendChild(typingDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Function to remove typing indicator
+    function removeTypingIndicator() {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+
+    // Function to call Gemini API
+    async function getGeminiResponse(prompt) {
+        showTypingIndicator();
+        sendBtn.disabled = true;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+        // Add user's message to history
+        chatHistory.push({ role: 'user', parts: [{ text: prompt }] });
+
+        const payload = {
+            contents: chatHistory,
+            systemInstruction: {
+                parts: [{
+                    text: "You are Midas, an AI assistant with a singular focus on personal finance, budgeting, and smart spending. Your primary goal is to provide clear, actionable, and empathetic advice strictly within these topics. IMPORTANT: If a user asks a question outside the scope of finance, budgeting, investing, or money management, you must politely decline to answer and gently guide the conversation back to your area of expertise. For example, you can say 'That's an interesting question, but my expertise is in helping you with your finances. How about we look at creating a budget?' or 'I can't help with that, but I can assist with any financial questions you have.' Do not answer questions about history, science, coding, or any other non-financial topic. Maintain a supportive, human-like, and encouraging demeanor as a trusted financial advisor. Use emojis occasionally to make the conversation more friendly and interactive (like a little gold sparkle ✨ or a piggy bank 🐷), but avoid overusing them."
+                }]
+            },
+            // Safety settings can be adjusted
+            safetySettings: [
+                { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+                { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+                { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+                { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            ],
+        };
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error ? errorData.error.message : 'An unknown API error occurred.');
+            }
+
+            const result = await response.json();
+
+            // Handle cases where content might be blocked
+            if (!result.candidates || result.candidates.length === 0 || !result.candidates[0].content) {
+                throw new Error('Response was blocked or empty. Please check safety settings or try a different prompt.');
+            }
+
+            const aiResponse = result.candidates[0].content.parts[0].text;
+
+            // Add AI's response to history
+            chatHistory.push({ role: 'model', parts: [{ text: aiResponse }] });
+
+            removeTypingIndicator();
+            addMessage('ai', aiResponse);
+
+        } catch (error) {
+            console.error("Gemini API Error:", error);
+            removeTypingIndicator();
+            addMessage('ai', `Oh dear, it seems something went wrong: ${error.message}. Please double-check your API key and internet connection, and then give it another try!`);
+        } finally {
+            sendBtn.disabled = false;
+            userInput.focus();
+        }
+    }
+
+    async function handleUserInput() {
+        const prompt = userInput.value.trim();
+        if (prompt && apiKey) {
+            addMessage('user', prompt);
+            userInput.value = '';
+            await getGeminiResponse(prompt);
+        }
+    }
+
+    // Event listeners
+    sendBtn.addEventListener('click', handleUserInput);
+    userInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Prevent new line
+            handleUserInput();
+        }
+    });
+
+    // Initial setup
+    initializeApp();
+</script>
+</body>
+</html>
+
