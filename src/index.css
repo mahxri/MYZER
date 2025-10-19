@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 43 74% 30%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 43 74% 30%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 43 74% 30%;
+
+    --primary: 43 96% 56%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 43 100% 88%;
+    --secondary-foreground: 43 74% 30%;
+
+    --muted: 43 30% 95%;
+    --muted-foreground: 43 20% 50%;
+
+    --accent: 43 96% 56%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 43 30% 90%;
+    --input: 43 30% 90%;
+    --ring: 43 96% 56%;
+
+    --radius: 0.75rem;
+
+    --gold: 43 96% 56%;
+    --gold-light: 43 100% 88%;
+    --gold-dark: 43 74% 30%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 43 74% 30%;
+    --sidebar-primary: 43 96% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 43 100% 88%;
+    --sidebar-accent-foreground: 43 74% 30%;
+    --sidebar-border: 43 30% 90%;
+    --sidebar-ring: 43 96% 56%;
+  }
+
+  .dark {
+    --background: 43 20% 10%;
+    --foreground: 43 100% 88%;
+
+    --card: 43 25% 15%;
+    --card-foreground: 43 100% 88%;
+
+    --popover: 43 25% 15%;
+    --popover-foreground: 43 100% 88%;
+
+    --primary: 43 96% 56%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 43 30% 20%;
+    --secondary-foreground: 43 100% 88%;
+
+    --muted: 43 20% 20%;
+    --muted-foreground: 43 30% 60%;
+
+    --accent: 43 96% 56%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 43 100% 88%;
+
+    --border: 43 20% 25%;
+    --input: 43 20% 25%;
+    --ring: 43 96% 56%;
+    
+    --gold: 43 96% 56%;
+    --gold-light: 43 100% 88%;
+    --gold-dark: 43 74% 30%;
+
+    --sidebar-background: 43 20% 10%;
+    --sidebar-foreground: 43 100% 88%;
+    --sidebar-primary: 43 96% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 43 30% 20%;
+    --sidebar-accent-foreground: 43 100% 88%;
+    --sidebar-border: 43 20% 25%;
+    --sidebar-ring: 43 96% 56%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
